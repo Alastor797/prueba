@@ -239,10 +239,21 @@
 
         function toggleManual() {
             const isManual = document.getElementById('manualMode').checked;
-            document.getElementById('vGroup').classList.toggle('active', isManual);
-            document.getElementById('cGroup').classList.toggle('active', isManual);
+            const vGrp = document.getElementById('vGroup');
+            const cGrp = document.getElementById('cGroup');
             
-            // Vibración suave para feedback (si el dispositivo lo permite)
+            vGrp.classList.toggle('active', isManual);
+            cGrp.classList.toggle('active', isManual);
+
+            // Si se apaga el manual, reseteamos valores a 0 por coherencia
+            if (!isManual) {
+                document.getElementById('vSlider').value = 0;
+                document.getElementById('cSlider').value = 0;
+                updateVal('v');
+                updateVal('c');
+            }
+            
+            // Vibración suave para feedback
             if (window.navigator.vibrate) {
                 window.navigator.vibrate(15);
             }
