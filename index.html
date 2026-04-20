@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FORECAST Control</title>
+    <!-- Script oficial de Telegram para Mini Apps -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #0a0a0c;
+            --card: #16161a;
+            --text: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(112, 0, 255, 0.05) 0%, transparent 50%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 10px;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .switch-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Modern Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 54px;
+            height: 28px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-round {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #2a2a2e;
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 34px;
+        }
+        .slider-round:before {
+            position: absolute; content: "";
+            height: 20px; width: 20px; left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        input:checked + .slider-round {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        }
+        input:checked + .slider-round:before {
+            transform: translateX(26px);
+        }
+
+        /* Groups */
+        .param-group {
+            margin-bottom: 35px;
+            opacity: 0.2;
+            filter: grayscale(1);
+            transition: all 0.4s ease;
+            pointer-events: none;
+            transform: scale(0.98);
+        }
+        .param-group.active {
+            opacity: 1;
+            filter: grayscale(0);
+            pointer-events: all;
+            transform: scale(1);
+        }
+
+        .label-val {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .label-val .val {
+            color: var(--primary);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Range Styling */
+        input[type=range] {
+            width: 100%;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.05);
+            height: 6px;
+            border-radius: 10px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px; width: 28px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+            cursor: pointer;
+            border: 2px solid var(--primary);
+        }
+
+        .btn-send {
+            width: 100%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 10px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: transform 0.2s;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .btn-send:active {
+            transform: scale(0.96);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 5px;
+            box-shadow: 0 0 10px #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FORECAST V6.0</h1>
+        <p><span class="status-dot"></span> Link LoRa-Zenoh Activo</p>
+    </div>
+
+    <div class="control-card">
+        <div class="switch-container">
+            <span class="switch-label">CONTROL MANUAL</span>
+            <label class="switch">
+                <input type="checkbox" id="manualMode" onchange="toggleManual()">
+                <span class="slider-round"></span>
+            </label>
+        </div>
+
+        <div id="vGroup" class="param-group">
+            <div class="label-val">
+                <span>VÁLVULA DE RIEGO</span>
+                <span id="vVal" class="val">0%</span>
+            </div>
+            <input type="range" id="vSlider" min="0" max="100" value="0" oninput="updateVal('v')">
+        </div>
+
+        <div id="cGroup" class="param-group">
+            <div class="label-val">
+                <span>COMPUERTA ZENITAL</span>
+                <span id="cVal" class="val">0°</span>
+            </div>
+            <input type="range" id="cSlider" min="0" max="90" value="0" oninput="updateVal('c')">
+        </div>
+
+        <button class="btn-send" onclick="sendData()">APLICAR CAMBIOS</button>
+    </div>
+
+    <script>
+        // Inicializar WebApp de Telegram
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Abre la app a pantalla completa
+        
+        // Colores de la interfaz segun el tema de Telegram
+        tg.headerColor = '#0a0a0c';
+
+        function toggleManual() {
+            const isManual = document.getElementById('manualMode').checked;
+            document.getElementById('vGroup').classList.toggle('active', isManual);
+            document.getElementById('cGroup').classList.toggle('active', isManual);
+            
+            // Vibración suave para feedback (si el dispositivo lo permite)
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(15);
+            }
+        }
+
+        function updateVal(type) {
+            const slider = document.getElementById(type + 'Slider');
+            const valDisplay = document.getElementById(type + 'Val');
+            valDisplay.innerText = slider.value + (type === 'v' ? '%' : '°');
+        }
+
+        function sendData() {
+            const isManual = document.getElementById('manualMode').checked;
+            const data = {
+                manual: isManual,
+                valvula: document.getElementById('vSlider').value,
+                compuerta: document.getElementById('cSlider').value,
+                timestamp: Date.now()
+            };
+            
+            // Enviamos un feedback visual antes de cerrar
+            const btn = document.querySelector('.btn-send');
+            btn.innerText = "ENVIANDO...";
+            btn.style.opacity = "0.7";
+
+            // ¡MAGIA! Esto envía el JSON al servidor_telegram.py automáticamente
+            setTimeout(() => {
+                tg.sendData(JSON.stringify(data));
+                tg.close();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
