@@ -38,6 +38,18 @@
         .label-row .val{color:var(--primary);font-weight:700;font-family:'Orbitron';font-size:.95rem}
         input[type=range]{width:100%;-webkit-appearance:none;background:rgba(255,255,255,.05);height:6px;border-radius:5px;outline:none;margin:5px 0}
         input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:26px;width:26px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer}
+        /* ─── CONTROLES DE PRECISIÓN ─── */
+        .precision-control{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0}
+        .step-btn{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:white;width:46px;height:46px;border-radius:14px;font-size:1.3rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+        .step-btn:active{background:var(--primary);color:#000;transform:scale(.88);box-shadow:var(--glow)}
+        .num-input{background:rgba(0,0,0,.4);border:2px solid var(--glass-border);color:var(--primary);width:85px;height:52px;text-align:center;font-size:1.5rem;font-family:'Orbitron';border-radius:14px;outline:none;transition:all .3s;-moz-appearance:textfield}
+        .num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+        .num-input:focus{border-color:var(--primary);box-shadow:var(--glow)}
+        .num-unit{font-size:1.1rem;color:rgba(255,255,255,.4);font-family:'Orbitron';font-weight:700}
+        .presets-row{display:flex;gap:8px;margin-top:8px}
+        .preset-btn{flex:1;padding:9px 4px;background:rgba(255,255,255,.03);border:1px solid var(--glass-border);border-radius:12px;color:rgba(255,255,255,.5);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .25s;text-transform:uppercase;letter-spacing:.5px}
+        .preset-btn:active{background:rgba(0,240,255,.15);color:var(--primary);border-color:var(--primary);transform:scale(.95)}
+        .preset-btn.active-preset{background:rgba(0,240,255,.1);color:var(--primary);border-color:rgba(0,240,255,.3)}
         .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:15px;border:1px solid rgba(255,255,255,.1)}
         .toggle-riego{background:rgba(0,240,255,.05);border-color:rgba(0,240,255,.2)}
         .toggle-danger{background:rgba(255,0,85,.05);border-color:rgba(255,0,85,.2)}
@@ -111,8 +123,22 @@
                 </label>
                 <div style="height:10px"></div>
                 <div>
-                    <div class="label-row"><span>Aire (Compuerta)</span><span id="cVal" class="val">0°</span></div>
-                    <input type="range" id="cSlider" min="0" max="90" value="0" oninput="updateVal('c')">
+                    <div class="label-row"><span>Aire (Compuerta)</span></div>
+                    <!-- Control de Precisión -->
+                    <div class="precision-control">
+                        <button class="step-btn" onclick="stepVal(-1)">−</button>
+                        <input type="number" id="cInput" class="num-input" value="0" min="0" max="90" step="1" oninput="syncFromInput()">
+                        <span class="num-unit">°</span>
+                        <button class="step-btn" onclick="stepVal(1)">+</button>
+                    </div>
+                    <!-- Slider espejo (referencia visual) -->
+                    <input type="range" id="cSlider" min="0" max="90" value="0" step="1" oninput="syncFromSlider()">
+                    <!-- Presets rápidos -->
+                    <div class="presets-row">
+                        <button class="preset-btn" id="pre0" onclick="setAngle(0)">Cerrado 0°</button>
+                        <button class="preset-btn" id="pre45" onclick="setAngle(45)">Mitad 45°</button>
+                        <button class="preset-btn" id="pre90" onclick="setAngle(90)">Abierto 90°</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,7 +154,7 @@
             <div id="sleepSec" class="dynamic-section" style="flex-direction:column;gap:15px">
                 <div>
                     <div class="label-row"><span>Duración del DeepSleep</span><span id="sVal" class="val">120 min</span></div>
-                    <input type="range" id="sSlider" min="0" max="360" step="1" value="120" oninput="updateVal('s')">
+                    <input type="range" id="sSlider" min="0" max="360" step="1" value="120" oninput="updateSleepVal()">
                 </div>
                 <label class="toggle-row toggle-danger">
                     <span style="font-size:.85rem;font-weight:700;color:#ff4d82;text-transform:uppercase">Forzado Inmediato</span>
@@ -207,14 +233,12 @@
             updateSummary();
         }
 
-        // ─── SELECCIÓN INDIVIDUAL ───
+        // ─── SELECCIÓN ───
         function toggleSlave(mid, sid) {
             if (selMode === 0) {
-                // Individual: solo 1 a la vez
                 selection = {};
                 selection[mid] = [sid];
             } else {
-                // Personalizado: toggle múltiple
                 if (!selection[mid]) selection[mid] = [];
                 const idx = selection[mid].indexOf(sid);
                 if (idx >= 0) {
@@ -228,11 +252,8 @@
         }
 
         function toggleAllSlaves(mid, checked) {
-            if (checked) {
-                selection[mid] = [...topology[mid]];
-            } else {
-                delete selection[mid];
-            }
+            if (checked) { selection[mid] = [...topology[mid]]; }
+            else { delete selection[mid]; }
             renderNetwork();
         }
 
@@ -295,10 +316,46 @@
             document.getElementById('alertBox').style.display = document.getElementById('forceCheck').checked ? 'block' : 'none';
         }
 
-        function updateVal(type) {
-            const slider = document.getElementById(type + 'Slider');
-            const display = document.getElementById(type + 'Val');
-            display.innerText = slider.value + (type === 'c' ? '°' : ' min');
+        // ─── CONTROL DE PRECISIÓN (COMPUERTA) ───
+        function clampAngle(v) {
+            return Math.max(0, Math.min(90, parseInt(v) || 0));
+        }
+
+        function setAngle(val) {
+            val = clampAngle(val);
+            document.getElementById('cInput').value = val;
+            document.getElementById('cSlider').value = val;
+            highlightPreset(val);
+            if (window.navigator.vibrate) window.navigator.vibrate(5);
+        }
+
+        function syncFromInput() {
+            const raw = document.getElementById('cInput').value;
+            const val = clampAngle(raw);
+            document.getElementById('cSlider').value = val;
+            highlightPreset(val);
+        }
+
+        function syncFromSlider() {
+            const val = parseInt(document.getElementById('cSlider').value);
+            document.getElementById('cInput').value = val;
+            highlightPreset(val);
+        }
+
+        function stepVal(amount) {
+            const current = parseInt(document.getElementById('cInput').value) || 0;
+            setAngle(current + amount);
+        }
+
+        function highlightPreset(val) {
+            document.getElementById('pre0').classList.toggle('active-preset', val === 0);
+            document.getElementById('pre45').classList.toggle('active-preset', val === 45);
+            document.getElementById('pre90').classList.toggle('active-preset', val === 90);
+        }
+
+        // ─── DEEPSLEEP SLIDER ───
+        function updateSleepVal() {
+            document.getElementById('sVal').innerText = document.getElementById('sSlider').value + ' min';
         }
 
         // ─── ENVIAR COMANDO ───
@@ -329,7 +386,7 @@
             const data = {
                 flags: flags,
                 v: document.getElementById('vToggle').checked ? 0 : 90,
-                c: parseInt(document.getElementById('cSlider').value),
+                c: parseInt(document.getElementById('cInput').value),
                 s: seconds,
                 targets: targets
             };
@@ -347,6 +404,7 @@
         // ─── INICIALIZACIÓN ───
         parseTopology();
         renderNetwork();
+        highlightPreset(0);
     </script>
 </body>
 </html>
