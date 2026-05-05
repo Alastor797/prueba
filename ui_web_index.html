@@ -3,161 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NET-CORE-CPS | Orquestador</title>
+    <title>NET-CORE-CPS | Panel Multi-Maestro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #00f0ff;
-            --secondary: #7b2cbf;
-            --danger: #ff2a5f;
-            --bg: #020203;
-            --card: rgba(15, 15, 20, 0.65);
-            --text: #e0e0e0;
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --glow: 0 0 20px rgba(0, 240, 255, 0.4);
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Rajdhani', sans-serif; }
-
-        body {
-            background-color: var(--bg);
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 45%),
-                radial-gradient(circle at 85% 80%, rgba(123, 44, 191, 0.08) 0%, transparent 45%);
-            color: var(--text);
-            margin: 0; padding: 15px;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-        }
-
-        .container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 15px; }
-
-        .header { text-align: center; margin-bottom: 5px; position: relative; }
-        .header h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(135deg, #ffffff, var(--primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: var(--glow);
-        }
-        .header p {
-            font-size: 0.85rem; letter-spacing: 3px; color: rgba(255,255,255,0.5);
-            text-transform: uppercase; margin-top: 5px;
-        }
-
-        .control-card {
-            background: var(--card);
-            padding: 22px; border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            display: flex; flex-direction: column; gap: 18px;
-        }
-
-        .section-title {
-            font-size: 0.8rem; letter-spacing: 3px;
-            color: var(--primary); font-weight: 700;
-            text-transform: uppercase; margin-bottom: 5px;
-            display: flex; align-items: center; gap: 12px;
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-        }
-
-        .section-title::after { content: ''; height: 1px; flex-grow: 1; background: rgba(255,255,255,0.1); }
-
-        /* Segmented Selector para 2 opciones */
-        .mode-selector {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--glass-border);
-            padding: 4px; border-radius: 18px;
-            display: grid; grid-template-columns: 1fr 1fr;
-            position: relative; 
-        }
-
-        .mode-btn {
-            background: none; border: none; color: rgba(255, 255, 255, 0.4);
-            padding: 12px 0; font-size: 0.8rem; font-weight: 700;
-            cursor: pointer; border-radius: 14px; transition: all 0.3s;
-            text-transform: uppercase; z-index: 1;
-        }
-
-        .mode-btn.active { color: #fff; text-shadow: 0 0 10px var(--primary); }
-
-        .glider {
-            position: absolute; height: calc(100% - 8px); width: calc(50% - 4px);
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            border-radius: 14px; top: 4px; left: 4px;
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Actuadores */
-        .dynamic-section {
-            transition: opacity 0.4s;
-            opacity: 0; display: none;
-        }
-
-        .label-row { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
-        .label-row span { font-size: 0.9rem; color: rgba(255,255,255,0.7); }
-        .label-row .val { color: var(--primary); font-weight: 700; font-family: 'Orbitron'; font-size: 1rem; }
-
-        input[type=range] {
-            width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.05);
-            height: 6px; border-radius: 5px; outline: none; margin-top: 5px; margin-bottom: 5px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%;
-            background: #fff; border: 3px solid var(--primary); cursor: pointer;
-        }
-
-        /* Toggle Switch iOS style */
-        .toggle-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,0,85,0.05); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,0,85,0.2); }
-        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider.round {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px;
-        }
-        .slider.round:before {
-            position: absolute; content: ""; height: 18px; width: 18px;
-            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider.round { background-color: var(--danger); }
-        input:checked + .slider.round:before { transform: translateX(24px); }
-        input.primary-toggle:checked + .slider.round { background-color: var(--primary); }
-
-        #alertBox {
-            background: rgba(255, 0, 85, 0.1); border: 1px solid var(--danger);
-            border-radius: 12px; padding: 8px; color: var(--danger);
-            font-size: 0.75rem; font-weight: 700; text-align: center;
-            display: none; animation: pulse 1.5s infinite; letter-spacing: 1px;
-        }
-
-        /* Botón Ejecutar */
-        .btn-apply {
-            width: 100%; padding: 18px; border-radius: 18px; border: none;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            color: white; font-family: 'Orbitron', sans-serif;
-            font-size: 1rem; font-weight: 700; letter-spacing: 2px;
-            cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            transition: 0.3s; margin-top: 5px;
-        }
-        .btn-apply:active { transform: scale(0.97); }
-
-        @keyframes pulse {
-            0% { opacity: 0.8; }
-            50% { opacity: 0.4; }
-            100% { opacity: 0.8; }
-        }
+        :root{--primary:#00f0ff;--secondary:#7b2cbf;--danger:#ff2a5f;--success:#00e676;--bg:#020203;--card:rgba(15,15,20,0.65);--text:#e0e0e0;--glass-border:rgba(255,255,255,0.05);--glow:0 0 20px rgba(0,240,255,0.4)}
+        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Rajdhani',sans-serif;margin:0;padding:0}
+        body{background-color:var(--bg);background-image:radial-gradient(circle at 15% 20%,rgba(0,240,255,0.08) 0%,transparent 45%),radial-gradient(circle at 85% 80%,rgba(123,44,191,0.08) 0%,transparent 45%);color:var(--text);padding:15px;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+        .container{width:100%;max-width:460px;display:flex;flex-direction:column;gap:15px}
+        .header{text-align:center;margin-bottom:5px}
+        .header h1{font-family:'Orbitron',sans-serif;font-size:1.6rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .header p{font-size:.8rem;letter-spacing:3px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:5px}
+        .stats-bar{display:flex;gap:10px;justify-content:center;margin-bottom:5px}
+        .stat-chip{background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.15);padding:6px 14px;border-radius:20px;font-size:.75rem;color:var(--primary);font-weight:700;letter-spacing:1px}
+        .control-card{background:var(--card);padding:20px;border-radius:20px;border:1px solid var(--glass-border);box-shadow:0 8px 32px rgba(0,0,0,.4);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:15px}
+        .section-title{font-size:.78rem;letter-spacing:3px;color:var(--primary);font-weight:700;text-transform:uppercase;display:flex;align-items:center;gap:12px;text-shadow:0 0 10px rgba(0,240,255,.2)}
+        .section-title::after{content:'';height:1px;flex-grow:1;background:rgba(255,255,255,.1)}
+        .mode-selector{background:rgba(0,0,0,.4);border:1px solid var(--glass-border);padding:4px;border-radius:18px;display:grid;grid-template-columns:1fr 1fr;position:relative}
+        .mode-btn{background:none;border:none;color:rgba(255,255,255,.4);padding:12px 0;font-size:.78rem;font-weight:700;cursor:pointer;border-radius:14px;transition:all .3s;text-transform:uppercase;z-index:1}
+        .mode-btn.active{color:#fff;text-shadow:0 0 10px var(--primary)}
+        .glider{position:absolute;height:calc(100% - 8px);width:calc(50% - 4px);background:linear-gradient(45deg,var(--primary),var(--secondary));border-radius:14px;top:4px;left:4px;transition:transform .4s cubic-bezier(.2,.8,.2,1);box-shadow:0 4px 15px rgba(0,0,0,.5)}
+        .master-section{background:rgba(0,240,255,0.03);border:1px solid rgba(0,240,255,0.1);border-radius:16px;padding:14px;margin-top:5px}
+        .master-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .master-label{font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--primary);letter-spacing:2px}
+        .slave-grid{display:flex;flex-wrap:wrap;gap:8px}
+        .slave-chip{padding:8px 16px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .3s;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(255,255,255,.5);user-select:none}
+        .slave-chip.selected{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(123,44,191,.2));border-color:var(--primary);color:#fff;box-shadow:0 0 12px rgba(0,240,255,.2)}
+        .slave-chip:active{transform:scale(.95)}
+        .master-check{display:flex;align-items:center;gap:8px;cursor:pointer}
+        .master-check input{accent-color:var(--primary);width:16px;height:16px}
+        .dynamic-section{transition:opacity .4s;opacity:0;display:none}
+        .label-row{display:flex;justify-content:space-between;margin-bottom:8px;align-items:center}
+        .label-row span{font-size:.85rem;color:rgba(255,255,255,.7)}
+        .label-row .val{color:var(--primary);font-weight:700;font-family:'Orbitron';font-size:.95rem}
+        input[type=range]{width:100%;-webkit-appearance:none;background:rgba(255,255,255,.05);height:6px;border-radius:5px;outline:none;margin:5px 0}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:26px;width:26px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer}
+        .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:15px;border:1px solid rgba(255,255,255,.1)}
+        .toggle-riego{background:rgba(0,240,255,.05);border-color:rgba(0,240,255,.2)}
+        .toggle-danger{background:rgba(255,0,85,.05);border-color:rgba(255,0,85,.2)}
+        .switch{position:relative;display:inline-block;width:50px;height:26px}
+        .switch input{opacity:0;width:0;height:0}
+        .slider.round{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:rgba(255,255,255,.1);transition:.4s;border-radius:34px}
+        .slider.round:before{position:absolute;content:"";height:18px;width:18px;left:4px;bottom:4px;background-color:white;transition:.4s;border-radius:50%}
+        input:checked+.slider.round{background-color:var(--danger)}
+        input:checked+.slider.round:before{transform:translateX(24px)}
+        input.primary-toggle:checked+.slider.round{background-color:var(--primary)}
+        #alertBox{background:rgba(255,0,85,.1);border:1px solid var(--danger);border-radius:12px;padding:8px;color:var(--danger);font-size:.75rem;font-weight:700;text-align:center;display:none;animation:pulse 1.5s infinite;letter-spacing:1px}
+        .btn-apply{width:100%;padding:16px;border-radius:18px;border:none;background:linear-gradient(45deg,var(--primary),var(--secondary));color:white;font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:2px;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.3);transition:.3s;margin-top:5px}
+        .btn-apply:active{transform:scale(.97)}
+        .btn-apply:disabled{opacity:.4;cursor:not-allowed}
+        .selection-summary{background:rgba(123,44,191,.08);border:1px solid rgba(123,44,191,.2);border-radius:12px;padding:10px;font-size:.78rem;color:rgba(255,255,255,.7);min-height:36px;line-height:1.5}
+        .selection-summary strong{color:var(--primary)}
+        .empty-state{text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.85rem}
+        @keyframes pulse{0%{opacity:.8}50%{opacity:.4}100%{opacity:.8}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .fade-in{animation:fadeIn .4s ease-out}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>NET-CORE-CPS</h1>
-            <p>ORQUESTADOR MAESTRO</p>
+            <p>PANEL MULTI-MAESTRO v5.0</p>
         </div>
 
-        <!-- SECCIÓN 1: CONTROL OPERATIVO (BIT 0) -->
+        <div class="stats-bar">
+            <div class="stat-chip" id="statMasters">MAESTROS: 0</div>
+            <div class="stat-chip" id="statSlaves">ESCLAVOS: 0</div>
+        </div>
+
+        <!-- SECCIÓN 1: MODO DE SELECCIÓN -->
+        <div class="control-card">
+            <div class="section-title">MODO DE SELECCIÓN</div>
+            <div class="mode-selector" id="sel-btns">
+                <div id="glider-sel" class="glider"></div>
+                <button class="mode-btn active" onclick="setSelMode(0)">INDIVIDUAL</button>
+                <button class="mode-btn" onclick="setSelMode(1)">PERSONALIZADO</button>
+            </div>
+
+            <!-- Mapa de Red Dinámico -->
+            <div id="networkMap"></div>
+
+            <!-- Resumen de Selección -->
+            <div class="selection-summary" id="selSummary">
+                <em>Selecciona un destino para el comando.</em>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: CONTROL OPERATIVO -->
         <div class="control-card">
             <div class="section-title">CONTROL OPERATIVO</div>
             <div class="mode-selector" id="ctl-btns">
@@ -165,19 +98,18 @@
                 <button class="mode-btn active" onclick="setControlMode(0)">AUTOMÁTICO</button>
                 <button class="mode-btn" onclick="setControlMode(1)">MANUAL</button>
             </div>
-
             <div id="actuatorsSec" class="dynamic-section">
-                <label class="toggle-row" style="background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2);">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Estado del Riego (Relé)</span>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span id="vVal" class="val" style="color: #fff; font-weight: 700;">OFF</span>
+                <label class="toggle-row toggle-riego">
+                    <span style="font-size:.85rem;font-weight:700;color:var(--primary);text-transform:uppercase">Riego (Relé)</span>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span id="vVal" class="val" style="color:#fff;font-weight:700">OFF</span>
                         <div class="switch">
-                            <input type="checkbox" id="vToggle" class="primary-toggle" onchange="document.getElementById('vVal').innerText = this.checked ? 'ON' : 'OFF'">
+                            <input type="checkbox" id="vToggle" class="primary-toggle" onchange="document.getElementById('vVal').innerText=this.checked?'ON':'OFF'">
                             <span class="slider round"></span>
                         </div>
                     </div>
                 </label>
-                <div style="height: 10px;"></div>
+                <div style="height:10px"></div>
                 <div>
                     <div class="label-row"><span>Aire (Compuerta)</span><span id="cVal" class="val">0°</span></div>
                     <input type="range" id="cSlider" min="0" max="90" value="0" oninput="updateVal('c')">
@@ -185,7 +117,7 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 2: DEEPSLEEP (BITS 1 y 2) -->
+        <!-- SECCIÓN 3: DEEPSLEEP -->
         <div class="control-card">
             <div class="section-title">GESTIÓN DE DEEPSLEEP</div>
             <div class="mode-selector" id="ds-btns">
@@ -193,17 +125,13 @@
                 <button class="mode-btn active" onclick="setSleepMode(0)">NORMAL</button>
                 <button class="mode-btn" onclick="setSleepMode(1)">PERSONALIZADO</button>
             </div>
-
-            <div id="sleepSec" class="dynamic-section" style="flex-direction: column; gap: 15px;">
-                <!-- TIEMPO PERSONALIZADO -->
+            <div id="sleepSec" class="dynamic-section" style="flex-direction:column;gap:15px">
                 <div>
                     <div class="label-row"><span>Duración del DeepSleep</span><span id="sVal" class="val">120 min</span></div>
                     <input type="range" id="sSlider" min="0" max="360" step="1" value="120" oninput="updateVal('s')">
                 </div>
-
-                <!-- OVERRIDE FORZADO -->
-                <label class="toggle-row">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: #ff4d82; text-transform: uppercase;">Activar Forzado Inmediato</span>
+                <label class="toggle-row toggle-danger">
+                    <span style="font-size:.85rem;font-weight:700;color:#ff4d82;text-transform:uppercase">Forzado Inmediato</span>
                     <div class="switch">
                         <input type="checkbox" id="forceCheck" onchange="toggleWarning()">
                         <span class="slider round"></span>
@@ -213,7 +141,7 @@
             </div>
         </div>
 
-        <button class="btn-apply" onclick="apply()">ENVIAR COMANDO BINARIO</button>
+        <button class="btn-apply" id="btnApply" onclick="apply()" disabled>SELECCIONA UN DESTINO</button>
     </div>
 
     <script>
@@ -221,87 +149,192 @@
         tg.expand();
         tg.headerColor = '#050508';
 
-        let modeControl = 0; // 0: Auto, 1: Manual
-        let modeSleep = 0;   // 0: Normal, 1: Personalizado
+        // ─── ESTADO GLOBAL ───
+        let selMode = 0;       // 0: Individual, 1: Personalizado
+        let modeControl = 0;   // 0: Auto, 1: Manual
+        let modeSleep = 0;     // 0: Normal, 1: Custom
+        let topology = {};     // { maestro_id: [sid1, sid2, ...] }
+        let selection = {};    // { maestro_id: [sid1, sid2, ...] }
+
+        // ─── PARSEAR TOPOLOGÍA DESDE URL ───
+        function parseTopology() {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get('topo');
+            if (!raw) return;
+            // Formato: "1:119,116;2:113,110"
+            raw.split(';').forEach(part => {
+                const [mid, sidsStr] = part.split(':');
+                if (mid && sidsStr) {
+                    topology[parseInt(mid)] = sidsStr.split(',').map(Number);
+                }
+            });
+        }
+
+        // ─── RENDERIZAR MAPA DE RED ───
+        function renderNetwork() {
+            const map = document.getElementById('networkMap');
+            const masters = Object.keys(topology).map(Number).sort();
+
+            document.getElementById('statMasters').textContent = 'MAESTROS: ' + masters.length;
+            let totalSlaves = 0;
+            masters.forEach(m => totalSlaves += topology[m].length);
+            document.getElementById('statSlaves').textContent = 'ESCLAVOS: ' + totalSlaves;
+
+            if (masters.length === 0) {
+                map.innerHTML = '<div class="empty-state">Sin maestros detectados</div>';
+                return;
+            }
+
+            let html = '';
+            masters.forEach(mid => {
+                const slaves = topology[mid];
+                html += '<div class="master-section fade-in">';
+                html += '<div class="master-header">';
+                html += '<span class="master-label">🏠 MAESTRO ' + mid + '</span>';
+                if (selMode === 1) {
+                    const allSelected = slaves.every(s => (selection[mid] || []).includes(s));
+                    html += '<label class="master-check"><input type="checkbox" ' + (allSelected ? 'checked' : '') + ' onchange="toggleAllSlaves(' + mid + ',this.checked)"> TODOS</label>';
+                }
+                html += '</div>';
+                html += '<div class="slave-grid">';
+                slaves.forEach(sid => {
+                    const isSel = (selection[mid] || []).includes(sid);
+                    html += '<div class="slave-chip ' + (isSel ? 'selected' : '') + '" onclick="toggleSlave(' + mid + ',' + sid + ')">E' + sid + '</div>';
+                });
+                html += '</div></div>';
+            });
+            map.innerHTML = html;
+            updateSummary();
+        }
+
+        // ─── SELECCIÓN INDIVIDUAL ───
+        function toggleSlave(mid, sid) {
+            if (selMode === 0) {
+                // Individual: solo 1 a la vez
+                selection = {};
+                selection[mid] = [sid];
+            } else {
+                // Personalizado: toggle múltiple
+                if (!selection[mid]) selection[mid] = [];
+                const idx = selection[mid].indexOf(sid);
+                if (idx >= 0) {
+                    selection[mid].splice(idx, 1);
+                    if (selection[mid].length === 0) delete selection[mid];
+                } else {
+                    selection[mid].push(sid);
+                }
+            }
+            renderNetwork();
+        }
+
+        function toggleAllSlaves(mid, checked) {
+            if (checked) {
+                selection[mid] = [...topology[mid]];
+            } else {
+                delete selection[mid];
+            }
+            renderNetwork();
+        }
+
+        function updateSummary() {
+            const el = document.getElementById('selSummary');
+            const btn = document.getElementById('btnApply');
+            const mids = Object.keys(selection).map(Number).sort();
+
+            if (mids.length === 0) {
+                el.innerHTML = '<em>Selecciona un destino para el comando.</em>';
+                btn.disabled = true;
+                btn.textContent = 'SELECCIONA UN DESTINO';
+                return;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'ENVIAR COMANDO';
+
+            let parts = [];
+            let totalSel = 0;
+            mids.forEach(mid => {
+                const sids = selection[mid];
+                totalSel += sids.length;
+                parts.push('<strong>M' + mid + '</strong> → E' + sids.join(', E'));
+            });
+            el.innerHTML = '🎯 ' + parts.join(' | ') + ' (' + totalSel + ' nodo' + (totalSel > 1 ? 's' : '') + ')';
+        }
+
+        // ─── CONTROLES DE MODO ───
+        function setSelMode(m) {
+            selMode = m;
+            selection = {};
+            document.getElementById('glider-sel').style.transform = m === 0 ? 'translateX(0)' : 'translateX(100%)';
+            document.querySelectorAll('#sel-btns .mode-btn').forEach((b, i) => b.classList.toggle('active', i === m));
+            renderNetwork();
+            if (window.navigator.vibrate) window.navigator.vibrate(10);
+        }
 
         function setControlMode(m) {
             modeControl = m;
             document.getElementById('glider-ctl').style.transform = m === 0 ? 'translateX(0)' : 'translateX(100%)';
-            
-            const btns = document.querySelectorAll('#ctl-btns .mode-btn');
-            btns[0].classList.toggle('active', m === 0);
-            btns[1].classList.toggle('active', m === 1);
-
+            document.querySelectorAll('#ctl-btns .mode-btn').forEach((b, i) => b.classList.toggle('active', i === m));
             const sec = document.getElementById('actuatorsSec');
-            if (m === 1) {
-                sec.style.display = 'block';
-                setTimeout(() => sec.style.opacity = 1, 10);
-            } else {
-                sec.style.opacity = 0;
-                setTimeout(() => sec.style.display = 'none', 300);
-            }
+            if (m === 1) { sec.style.display = 'block'; setTimeout(() => sec.style.opacity = 1, 10); }
+            else { sec.style.opacity = 0; setTimeout(() => sec.style.display = 'none', 300); }
             if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 
         function setSleepMode(m) {
             modeSleep = m;
             document.getElementById('glider-ds').style.transform = m === 0 ? 'translateX(0)' : 'translateX(100%)';
-            
-            const btns = document.querySelectorAll('#ds-btns .mode-btn');
-            btns[0].classList.toggle('active', m === 0);
-            btns[1].classList.toggle('active', m === 1);
-
+            document.querySelectorAll('#ds-btns .mode-btn').forEach((b, i) => b.classList.toggle('active', i === m));
             const sec = document.getElementById('sleepSec');
-            if (m === 1) {
-                sec.style.display = 'flex';
-                setTimeout(() => sec.style.opacity = 1, 10);
-            } else {
-                sec.style.opacity = 0;
-                setTimeout(() => sec.style.display = 'none', 300);
-            }
+            if (m === 1) { sec.style.display = 'flex'; setTimeout(() => sec.style.opacity = 1, 10); }
+            else { sec.style.opacity = 0; setTimeout(() => sec.style.display = 'none', 300); }
             if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 
         function toggleWarning() {
-            const isForced = document.getElementById('forceCheck').checked;
-            document.getElementById('alertBox').style.display = isForced ? 'block' : 'none';
+            document.getElementById('alertBox').style.display = document.getElementById('forceCheck').checked ? 'block' : 'none';
         }
 
         function updateVal(type) {
-            if (type === 'c' || type === 's') {
-                const slider = document.getElementById(type + 'Slider');
-                const display = document.getElementById(type + 'Val');
-                const suffix = (type === 'c' ? '°' : ' min');
-                display.innerText = slider.value + suffix;
-            }
+            const slider = document.getElementById(type + 'Slider');
+            const display = document.getElementById(type + 'Val');
+            display.innerText = slider.value + (type === 'c' ? '°' : ' min');
         }
 
+        // ─── ENVIAR COMANDO ───
         function apply() {
             let flags = 0;
-            // -- BIT 0: MANUAL
             if (modeControl === 1) flags |= (1 << 0);
-            
-            // -- BITS 1 (FORCED) y 2 (UPDATE_SP)
             if (modeSleep === 1) {
-                flags |= (1 << 2); // F_UPDATE_SLEEP_SP: Siempre que sea personalizado, es un nuevo default
-                // Si el toggle "Forzado Inmediato" está prendido:
-                if (document.getElementById('forceCheck').checked) {
-                    flags |= (1 << 1); // F_FORCE_SLEEP
-                }
+                flags |= (1 << 2);
+                if (document.getElementById('forceCheck').checked) flags |= (1 << 1);
             }
 
-            // Convertimos minutos seleccionados a SEGUNDOS para el backend
             const minutes = parseInt(document.getElementById('sSlider').value);
             const seconds = modeSleep === 1 ? (minutes * 60) : 0;
+
+            // Construir targets desde la selección
+            const targets = [];
+            Object.keys(selection).forEach(mid => {
+                const sids = selection[parseInt(mid)];
+                if (sids && sids.length > 0) {
+                    const allSelected = topology[parseInt(mid)] && sids.length === topology[parseInt(mid)].length;
+                    targets.push({
+                        maestro_id: parseInt(mid),
+                        sids: allSelected ? ["*"] : sids
+                    });
+                }
+            });
 
             const data = {
                 flags: flags,
                 v: document.getElementById('vToggle').checked ? 0 : 90,
                 c: parseInt(document.getElementById('cSlider').value),
-                s: seconds
+                s: seconds,
+                targets: targets
             };
 
-            const btn = document.querySelector('.btn-apply');
+            const btn = document.getElementById('btnApply');
             btn.innerText = "SINCRO...";
             btn.style.opacity = "0.6";
 
@@ -310,6 +343,10 @@
                 tg.close();
             }, 600);
         }
+
+        // ─── INICIALIZACIÓN ───
+        parseTopology();
+        renderNetwork();
     </script>
 </body>
 </html>
